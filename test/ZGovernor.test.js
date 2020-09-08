@@ -14,7 +14,7 @@ function encodeParameters(types, values) {
     return abi.encode(types, values);
 }
 
-contract.only('Governor', ([alice, minter, dev]) => {
+contract('Governor', ([alice, minter, dev]) => {
     const supply = ether('80000000');
     it('should work', async () => {
         this.token = await SushiToken.new(supply, { from: minter });
@@ -51,7 +51,7 @@ contract.only('Governor', ([alice, minter, dev]) => {
             'GovernorAlpha::propose: proposer votes below proposal threshold',
         );
 
-        await this.token.transfer(dev, ether('80000'), { from: minter });
+        await this.token.transfer(dev, ether('3200000'), { from: minter });
 
         await this.token.delegate(dev, { from: dev });
         await time.advanceBlock();

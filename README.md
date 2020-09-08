@@ -1,6 +1,4 @@
-# SushiSwap 🍣
-
-https://app.sushiswap.org. Feel free to read the code. More details coming soon.
+# Decaswap liquidity mining contracts
 
 ## Deployed Contracts / Hash
 

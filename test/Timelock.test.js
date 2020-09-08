@@ -1,9 +1,10 @@
-const { expectRevert, timee, ether } = require('@openzeppelin/test-helpers');
+const { expectRevert, time, ether } = require('@openzeppelin/test-helpers');
 const ethers = require('ethers');
 const SushiToken = artifacts.require('SushiToken');
 const MasterChef = artifacts.require('MasterChef');
 const MockERC20 = artifacts.require('MockERC20');
 const Timelock = artifacts.require('Timelock');
+const Reservoir = artifacts.require('Reservoir');
 
 function encodeParameters(types, values) {
     const abi = new ethers.utils.AbiCoder();
@@ -13,23 +14,25 @@ function encodeParameters(types, values) {
 contract('Timelock', ([alice, bob, carol, dev, minter]) => {
     const supply = ether('1000000');
     beforeEach(async () => {
-        this.sushi = await SushiToken.new(supply, { from: alice });
-        this.timelock = await Timelock.new(bob, '259200', { from: alice });
+        this.token = await SushiToken.new(supply, { from: minter });
+        this.reservoir = await Reservoir.new({ from: minter });
+        await this.token.transfer(this.reservoir.address, ether('100000'), { from: minter });
+        this.timelock = await Timelock.new(bob, '259200', { from: minter });
     });
 
     it('should not allow non-owner to do operation', async () => {
-        await this.sushi.transferOwnership(this.timelock.address, { from: alice });
+        await this.token.transferOwnership(this.timelock.address, { from: minter });
         await expectRevert(
-            this.sushi.transferOwnership(carol, { from: alice }),
+            this.token.transferOwnership(carol, { from: alice }),
             'Ownable: caller is not the owner',
         );
         await expectRevert(
-            this.sushi.transferOwnership(carol, { from: bob }),
+            this.token.transferOwnership(carol, { from: bob }),
             'Ownable: caller is not the owner',
         );
         await expectRevert(
             this.timelock.queueTransaction(
-                this.sushi.address, '0', 'transferOwnership(address)',
+                this.token.address, '0', 'transferOwnership(address)',
                 encodeParameters(['address'], [carol]),
                 (await time.latest()).add(time.duration.days(4)),
                 { from: alice },
@@ -39,33 +42,33 @@ contract('Timelock', ([alice, bob, carol, dev, minter]) => {
     });
 
     it('should do the timelock thing', async () => {
-        await this.sushi.transferOwnership(this.timelock.address, { from: alice });
+        await this.token.transferOwnership(this.timelock.address, { from: minter });
         const eta = (await time.latest()).add(time.duration.days(4));
         await this.timelock.queueTransaction(
-            this.sushi.address, '0', 'transferOwnership(address)',
+            this.token.address, '0', 'transferOwnership(address)',
             encodeParameters(['address'], [carol]), eta, { from: bob },
         );
         await time.increase(time.duration.days(1));
         await expectRevert(
             this.timelock.executeTransaction(
-                this.sushi.address, '0', 'transferOwnership(address)',
+                this.token.address, '0', 'transferOwnership(address)',
                 encodeParameters(['address'], [carol]), eta, { from: bob },
             ),
             "Timelock::executeTransaction: Transaction hasn't surpassed time lock.",
         );
         await time.increase(time.duration.days(4));
         await this.timelock.executeTransaction(
-            this.sushi.address, '0', 'transferOwnership(address)',
+            this.token.address, '0', 'transferOwnership(address)',
             encodeParameters(['address'], [carol]), eta, { from: bob },
         );
-        assert.equal((await this.sushi.owner()).valueOf(), carol);
+        assert.equal((await this.token.owner()).valueOf(), carol);
     });
 
     it('should also work with MasterChef', async () => {
         this.lp1 = await MockERC20.new('LPToken', 'LP', '10000000000', { from: minter });
         this.lp2 = await MockERC20.new('LPToken', 'LP', '10000000000', { from: minter });
-        this.chef = await MasterChef.new(this.sushi.address, dev, '1000', '0', '1000', { from: alice });
-        await this.sushi.transferOwnership(this.chef.address, { from: alice });
+        this.chef = await MasterChef.new(this.token.address, this.reservoir.address, dev, '1000', '0', '1000', { from: alice });
+        await this.reservoir.setApprove(this.token.address, this.chef.address, supply, { from: minter });
         await this.chef.add('100', this.lp1.address, true);
         await this.chef.transferOwnership(this.timelock.address, { from: alice });
         const eta = (await time.latest()).add(time.duration.days(4));

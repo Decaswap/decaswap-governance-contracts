@@ -4,28 +4,26 @@ const MasterChef = artifacts.require('MasterChef');
 const MockERC20 = artifacts.require('MockERC20');
 const Reservoir = artifacts.require('Reservoir');
 
-contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
+contract('DecaLMining', ([alice, bob, carol, dev, minter]) => {
     const supply = ether('1000000');
     beforeEach(async () => {
-        this.token = await SushiToken.new(supply, { from: alice });
-        this.reservoir = await Reservoir.new({ from: alice });
-        await this.token.transfer(this.token.address, ether('100000'), { from: alice });
+        this.token = await SushiToken.new(supply, { from: minter });
+        this.reservoir = await Reservoir.new({ from: minter });
+        await this.token.transfer(this.reservoir.address, ether('100000'), { from: minter });
     });
 
     it('should set correct state variables', async () => {
         this.chef = await MasterChef.new(this.token.address, this.reservoir.address, dev, '1000', '0', '1000', { from: alice });
-        await this.reservoir.setApprove(this.token.address, this.chef.address, supply);
-        await this.token.transferOwnership(this.chef.address, { from: alice });
+        await this.reservoir.setApprove(this.token.address, this.chef.address, supply, { from: minter });
         const token = await this.chef.token();
         const devaddr = await this.chef.devaddr();
-        const owner = await this.token.owner();
         assert.equal(token.valueOf(), this.token.address);
         assert.equal(devaddr.valueOf(), dev);
-        assert.equal(owner.valueOf(), this.chef.address);
     });
 
     it('should allow dev and only dev to update dev', async () => {
         this.chef = await MasterChef.new(this.token.address, this.reservoir.address, dev, '1000', '0', '1000', { from: alice });
+        await this.reservoir.setApprove(this.token.address, this.chef.address, supply, { from: minter });
         assert.equal((await this.chef.devaddr()).valueOf(), dev);
         await expectRevert(this.chef.dev(bob, { from: bob }), 'dev: wut?');
         await this.chef.dev(bob, { from: dev });
@@ -49,6 +47,7 @@ contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
         it('should allow emergency withdraw', async () => {
             // 100 per block farming rate starting at block 100 with bonus until block 1000
             this.chef = await MasterChef.new(this.token.address, this.reservoir.address, dev, '100', '100', '1000', { from: alice });
+            await this.reservoir.setApprove(this.token.address, this.chef.address, supply, { from: minter });
             await this.chef.add('100', this.lp.address, true);
             await this.lp.approve(this.chef.address, '1000', { from: bob });
             await this.chef.deposit(0, '100', { from: bob });
@@ -60,7 +59,7 @@ contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
         it('should give out SUSHIs only after farming time', async () => {
             // 100 per block farming rate starting at block 100 with bonus until block 1000
             this.chef = await MasterChef.new(this.token.address, this.reservoir.address, dev, '100', '100', '1000', { from: alice });
-            await this.token.transferOwnership(this.chef.address, { from: alice });
+            await this.reservoir.setApprove(this.token.address, this.chef.address, supply, { from: minter });
             await this.chef.add('100', this.lp.address, true);
             await this.lp.approve(this.chef.address, '1000', { from: bob });
             await this.chef.deposit(0, '100', { from: bob });
@@ -80,28 +79,21 @@ contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
             await this.chef.deposit(0, '0', { from: bob }); // block 105
             assert.equal((await this.token.balanceOf(bob)).valueOf(), '5000');
             assert.equal((await this.token.balanceOf(dev)).valueOf(), '500');
-            assert.equal((await this.token.totalSupply()).valueOf(), '5500');
         });
 
         it('should not distribute SUSHIs if no one deposit', async () => {
             // 100 per block farming rate starting at block 200 with bonus until block 1000
             this.chef = await MasterChef.new(this.token.address, this.reservoir.address, dev, '100', '200', '1000', { from: alice });
-            await this.token.transferOwnership(this.chef.address, { from: alice });
+            await this.reservoir.setApprove(this.token.address, this.chef.address, supply, { from: minter });
             await this.chef.add('100', this.lp.address, true);
             await this.lp.approve(this.chef.address, '1000', { from: bob });
-            await time.advanceBlockTo('199');
-            assert.equal((await this.token.totalSupply()).valueOf(), '0');
-            await time.advanceBlockTo('204');
-            assert.equal((await this.token.totalSupply()).valueOf(), '0');
             await time.advanceBlockTo('209');
             await this.chef.deposit(0, '10', { from: bob }); // block 210
-            assert.equal((await this.token.totalSupply()).valueOf(), '0');
             assert.equal((await this.token.balanceOf(bob)).valueOf(), '0');
             assert.equal((await this.token.balanceOf(dev)).valueOf(), '0');
             assert.equal((await this.lp.balanceOf(bob)).valueOf(), '990');
             await time.advanceBlockTo('219');
             await this.chef.withdraw(0, '10', { from: bob }); // block 220
-            assert.equal((await this.token.totalSupply()).valueOf(), '11000');
             assert.equal((await this.token.balanceOf(bob)).valueOf(), '10000');
             assert.equal((await this.token.balanceOf(dev)).valueOf(), '1000');
             assert.equal((await this.lp.balanceOf(bob)).valueOf(), '1000');
@@ -110,7 +102,7 @@ contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
         it('should distribute SUSHIs properly for each staker', async () => {
             // 100 per block farming rate starting at block 300 with bonus until block 1000
             this.chef = await MasterChef.new(this.token.address, this.reservoir.address, dev, '100', '300', '1000', { from: alice });
-            await this.token.transferOwnership(this.chef.address, { from: alice });
+            await this.reservoir.setApprove(this.token.address, this.chef.address, supply, { from: minter });
             await this.chef.add('100', this.lp.address, true);
             await this.lp.approve(this.chef.address, '1000', { from: alice });
             await this.lp.approve(this.chef.address, '1000', { from: bob });
@@ -129,7 +121,6 @@ contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
             //   MasterChef should have the remaining: 10000 - 5666 = 4334
             await time.advanceBlockTo('319')
             await this.chef.deposit(0, '10', { from: alice });
-            assert.equal((await this.token.totalSupply()).valueOf(), '11000');
             assert.equal((await this.token.balanceOf(alice)).valueOf(), '5666');
             assert.equal((await this.token.balanceOf(bob)).valueOf(), '0');
             assert.equal((await this.token.balanceOf(carol)).valueOf(), '0');
@@ -139,7 +130,6 @@ contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
             //   Bob should have: 4*2/3*1000 + 2*2/6*1000 + 10*2/7*1000 = 6190
             await time.advanceBlockTo('329')
             await this.chef.withdraw(0, '5', { from: bob });
-            assert.equal((await this.token.totalSupply()).valueOf(), '22000');
             assert.equal((await this.token.balanceOf(alice)).valueOf(), '5666');
             assert.equal((await this.token.balanceOf(bob)).valueOf(), '6190');
             assert.equal((await this.token.balanceOf(carol)).valueOf(), '0');
@@ -154,7 +144,6 @@ contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
             await this.chef.withdraw(0, '15', { from: bob });
             await time.advanceBlockTo('359')
             await this.chef.withdraw(0, '30', { from: carol });
-            assert.equal((await this.token.totalSupply()).valueOf(), '55000');
             assert.equal((await this.token.balanceOf(dev)).valueOf(), '5000');
             // Alice should have: 5666 + 10*2/7*1000 + 10*2/6.5*1000 = 11600
             assert.equal((await this.token.balanceOf(alice)).valueOf(), '11600');
@@ -171,7 +160,7 @@ contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
         it('should give proper SUSHIs allocation to each pool', async () => {
             // 100 per block farming rate starting at block 400 with bonus until block 1000
             this.chef = await MasterChef.new(this.token.address, this.reservoir.address, dev, '100', '400', '1000', { from: alice });
-            await this.token.transferOwnership(this.chef.address, { from: alice });
+            await this.reservoir.setApprove(this.token.address, this.chef.address, supply, { from: minter });
             await this.lp.approve(this.chef.address, '1000', { from: alice });
             await this.lp2.approve(this.chef.address, '1000', { from: bob });
             // Add first LP to the pool with allocation 1
@@ -198,7 +187,7 @@ contract.only('DecaLMining', ([alice, bob, carol, dev, minter]) => {
         it('should stop giving bonus SUSHIs after the bonus period ends', async () => {
             // 100 per block farming rate starting at block 500 with bonus until block 600
             this.chef = await MasterChef.new(this.token.address, this.reservoir.address, dev, '100', '500', '600', { from: alice });
-            await this.token.transferOwnership(this.chef.address, { from: alice });
+            await this.reservoir.setApprove(this.token.address, this.chef.address, supply, { from: minter });
             await this.lp.approve(this.chef.address, '1000', { from: alice });
             await this.chef.add('1', this.lp.address, true);
             // Alice deposits 10 LPs at block 590

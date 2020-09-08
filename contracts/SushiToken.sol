@@ -5,12 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-// SushiToken with Governance.
-contract SushiToken is ERC20("SushiToken", "SUSHI"), Ownable {
-    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (MasterChef).
-    function mint(address _to, uint256 _amount) public onlyOwner {
-        _mint(_to, _amount);
-        _moveDelegates(address(0), _delegates[_to], _amount);
+// Token with Governance.
+contract SushiToken is ERC20("Token", "TOKEN"), Ownable {
+    constructor(uint256 _supply) public {
+        _mint(msg.sender, _supply);
+        _moveDelegates(address(0), _delegates[msg.sender], _supply);
     }
 
     // Copied and modified from YAM code:

@@ -1,6 +1,6 @@
-const { expectRevert, time } = require('@openzeppelin/test-helpers');
+const { expectRevert, time, ether } = require('@openzeppelin/test-helpers');
 const ethers = require('ethers');
-const SushiToken = artifacts.require('SushiToken');
+const SushiToken = artifacts.require('MockERC20');
 const MasterChef = artifacts.require('MasterChef');
 const Timelock = artifacts.require('Timelock');
 const GovernorAlpha = artifacts.require('GovernorAlpha');
@@ -12,8 +12,9 @@ function encodeParameters(types, values) {
 }
 
 contract('Governor', ([alice, minter, dev]) => {
+    const supply = ether('1000000');
     it('should work', async () => {
-        this.sushi = await SushiToken.new({ from: alice });
+        this.sushi = await SushiToken.new(supply, { from: alice });
         await this.sushi.delegate(dev, { from: dev });
         this.chef = await MasterChef.new(this.sushi.address, dev, '100', '0', '0', { from: alice });
         await this.sushi.transferOwnership(this.chef.address, { from: alice });

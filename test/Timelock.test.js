@@ -1,4 +1,4 @@
-const { expectRevert, time } = require('@openzeppelin/test-helpers');
+const { expectRevert, timee, ether } = require('@openzeppelin/test-helpers');
 const ethers = require('ethers');
 const SushiToken = artifacts.require('SushiToken');
 const MasterChef = artifacts.require('MasterChef');
@@ -11,8 +11,9 @@ function encodeParameters(types, values) {
 }
 
 contract('Timelock', ([alice, bob, carol, dev, minter]) => {
+    const supply = ether('1000000');
     beforeEach(async () => {
-        this.sushi = await SushiToken.new({ from: alice });
+        this.sushi = await SushiToken.new(supply, { from: alice });
         this.timelock = await Timelock.new(bob, '259200', { from: alice });
     });
 

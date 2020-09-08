@@ -1,10 +1,10 @@
-pragma solidity 0.6.12;
+pragma solidity 0.5.16;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./uniswapv2/interfaces/IUniswapV2ERC20.sol";
-import "./uniswapv2/interfaces/IUniswapV2Pair.sol";
-import "./uniswapv2/interfaces/IUniswapV2Factory.sol";
+import "uniswap/uniswap-v2-core/contracts/interfaces/IUniswapV2ERC20.sol";
+import "uniswap/uniswap-v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import "uniswap/uniswap-v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
 
 contract SushiMaker {

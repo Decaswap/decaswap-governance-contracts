@@ -1,11 +1,12 @@
-pragma solidity 0.6.12;
+pragma solidity 0.5.16;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 
-contract SushiBar is ERC20("SushiBar", "xSUSHI"){
+contract SushiBar is ERC20, ERC20Detailed("SushiBar", "xSUSHI", 18){
     using SafeMath for uint256;
     IERC20 public sushi;
 

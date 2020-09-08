@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "test": "truffle test"
+  },
   "dependencies": {
-    "@openzeppelin/contracts": "^3.1.0",
+    "uniswap/uniswap-v2-core": "git://github.com/Uniswap/uniswap-v2-core.git#4dd5906",
+    "@openzeppelin/contracts": "2.5.0",
     "@openzeppelin/test-helpers": "^0.5.6",
     "truffle": "^5.1.41",
     "truffle-flattener": "^1.4.4"

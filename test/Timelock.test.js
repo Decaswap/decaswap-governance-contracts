@@ -12,7 +12,7 @@ function encodeParameters(types, values) {
 }
 
 contract('Timelock', ([alice, bob, carol, dev, minter]) => {
-    const supply = ether('1000000');
+    const supply = ether('80000000');
     beforeEach(async () => {
         this.token = await SushiToken.new(supply, { from: minter });
         this.reservoir = await Reservoir.new({ from: minter });

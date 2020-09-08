@@ -5,7 +5,7 @@ const MockERC20 = artifacts.require('MockERC20');
 const Reservoir = artifacts.require('Reservoir');
 
 contract('DecaLMining', ([alice, bob, carol, dev, minter]) => {
-    const supply = ether('1000000');
+    const supply = ether('80000000');
     beforeEach(async () => {
         this.token = await SushiToken.new(supply, { from: minter });
         this.reservoir = await Reservoir.new({ from: minter });

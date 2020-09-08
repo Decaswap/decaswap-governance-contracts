@@ -26,7 +26,7 @@ contract GovernorAlpha {
 
     /// @notice The number of votes required in order for a voter to become a proposer
     // function proposalThreshold() public pure returns (uint) { return 100000e18; } // 100,000 = 1% of Comp
-    function proposalThreshold() public view returns (uint) { return token.totalSupply() / 100; } // 1% of Supply
+    function proposalThreshold() public view returns (uint) { return token.totalSupply() / 1000; } // 0.1% of Supply
 
     /// @notice The maximum number of actions that can be included in a proposal
     function proposalMaxOperations() public pure returns (uint) { return 10; } // 10 actions

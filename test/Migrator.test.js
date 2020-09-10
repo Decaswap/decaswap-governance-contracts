@@ -1,23 +1,28 @@
-const { expectRevert, time } = require('@openzeppelin/test-helpers');
+const { expectRevert, time, ether } = require('@openzeppelin/test-helpers');
 const DecaToken = artifacts.require('DecaToken');
 const MasterChef = artifacts.require('MasterChef');
 const MockERC20 = artifacts.require('MockERC20');
 const UniswapV2Pair = artifacts.require('UniswapV2Pair');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const Migrator = artifacts.require('Migrator');
+const Reservoir = artifacts.require('Reservoir');
 
 contract('Migrator', ([alice, bob, dev, minter]) => {
+    const supply = ether('80000000');
+
     beforeEach(async () => {
         this.factory1 = await UniswapV2Factory.new(alice, { from: alice });
         this.factory2 = await UniswapV2Factory.new(alice, { from: alice });
-        this.deca = await DecaToken.new({ from: alice });
+        this.deca = await DecaToken.new(minter, { from: minter });
         this.weth = await MockERC20.new('WETH', 'WETH', '100000000', { from: minter });
         this.token = await MockERC20.new('TOKEN', 'TOKEN', '100000000', { from: minter });
+        this.reservoir = await Reservoir.new({ from: minter });
+        await this.deca.transfer(this.reservoir.address, supply, { from: minter });
         this.lp1 = await UniswapV2Pair.at((await this.factory1.createPair(this.weth.address, this.token.address)).logs[0].args.pair);
         this.lp2 = await UniswapV2Pair.at((await this.factory2.createPair(this.weth.address, this.token.address)).logs[0].args.pair);
-        this.chef = await MasterChef.new(this.deca.address, dev, '1000', '0', '100000', { from: alice });
+        this.chef = await MasterChef.new(this.deca.address, this.reservoir.address, dev, '1000', '0', '100000', { from: alice });
         this.migrator = await Migrator.new(this.chef.address, this.factory1.address, this.factory2.address, '0');
-        await this.deca.transferOwnership(this.chef.address, { from: alice });
+        await this.reservoir.setApprove(this.deca.address, this.chef.address, supply, { from: minter });
         await this.chef.add('100', this.lp1.address, true, { from: alice });
     });
 

@@ -18,7 +18,7 @@ import "./DecaToken.sol";
 contract GovernorAlpha {
     /// @notice The name of this contract
     // XXX: string public constant name = "Compound Governor Alpha";
-    string public constant name = "Sushi Governor Alpha";
+    string public constant name = "Deca Governor Alpha";
 
     /// @notice The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
     // XXX: function quorumVotes() public pure returns (uint) { return 400000e18; } // 400,000 = 4% of Comp
@@ -145,9 +145,9 @@ contract GovernorAlpha {
     /// @notice An event emitted when a proposal has been executed in the Timelock
     event ProposalExecuted(uint id);
 
-    constructor(address timelock_, address sushi_, address guardian_) public {
+    constructor(address timelock_, address deca_, address guardian_) public {
         timelock = TimelockInterface(timelock_);
-        deca = DecaToken(sushi_);
+        deca = DecaToken(deca_);
         guardian = guardian_;
     }
 

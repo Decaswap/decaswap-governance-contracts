@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./SushiToken.sol";
+import "./DecaToken.sol";
 
 
 interface IMigratorChef {
@@ -59,7 +59,7 @@ contract MasterChef is Ownable {
     }
 
     // The SUSHI TOKEN!
-    SushiToken public sushi;
+    DecaToken public deca;
     // Dev address.
     address public devaddr;
     // Block number when bonus SUSHI period ends.
@@ -85,13 +85,13 @@ contract MasterChef is Ownable {
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
 
     constructor(
-        SushiToken _sushi,
+        DecaToken _sushi,
         address _devaddr,
         uint256 _sushiPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock
     ) public {
-        sushi = _sushi;
+        deca = _sushi;
         devaddr = _devaddr;
         sushiPerBlock = _sushiPerBlock;
         bonusEndBlock = _bonusEndBlock;
@@ -192,8 +192,8 @@ contract MasterChef is Ownable {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 sushiReward = multiplier.mul(sushiPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        sushi.mint(devaddr, sushiReward.div(10));
-        sushi.mint(address(this), sushiReward);
+        deca.mint(devaddr, sushiReward.div(10));
+        deca.mint(address(this), sushiReward);
         pool.accSushiPerShare = pool.accSushiPerShare.add(sushiReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }
@@ -239,11 +239,11 @@ contract MasterChef is Ownable {
 
     // Safe sushi transfer function, just in case if rounding error causes pool to not have enough SUSHIs.
     function safeSushiTransfer(address _to, uint256 _amount) internal {
-        uint256 sushiBal = sushi.balanceOf(address(this));
+        uint256 sushiBal = deca.balanceOf(address(this));
         if (_amount > sushiBal) {
-            sushi.transfer(_to, sushiBal);
+            deca.transfer(_to, sushiBal);
         } else {
-            sushi.transfer(_to, _amount);
+            deca.transfer(_to, _amount);
         }
     }
 

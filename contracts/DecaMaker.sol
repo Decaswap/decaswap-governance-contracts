@@ -7,7 +7,7 @@ import "./uniswapv2/interfaces/IUniswapV2Pair.sol";
 import "./uniswapv2/interfaces/IUniswapV2Factory.sol";
 
 
-contract SushiMaker {
+contract DecaMaker {
     using SafeMath for uint256;
 
     IUniswapV2Factory public factory;
